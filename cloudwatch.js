@@ -1,6 +1,7 @@
 const AWS = require('aws-sdk');
 
 const cloudwatchlogs = new AWS.CloudWatchLogs({ region: 'eu-west-3' });
+const cloudwatch = new AWS.CloudWatch({ region: 'eu-west-3' });
 
 const params = {
   logGroupName: 'access_log', /* required */
@@ -11,6 +12,24 @@ const params = {
 }
 
 cloudwatchlogs.getLogEvents(params, function (err, data) {
-  if (err) console.log(err, err.stack); // an error occurred
-  else console.log(data);           // successful response
+  if (err) {
+    console.log(err, err.stack);
+  }
+  else {
+    const requestsPerHour = data.events.length;
+    cloudwatch.putMetricData({
+      MetricData: [
+        {
+          MetricName: 'requests_per_hour',
+          Unit: 'Count',
+          Value: requestsPerHour
+        },
+      ],
+      Namespace: 'CNA'
+    }, function (err, data) {
+      console.log({ err });
+      console.log({ data });
+    })
+
+  }
 });
